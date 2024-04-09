@@ -131,36 +131,42 @@ void i2c_send(uint8_t* buf, uint8_t buflen) {
 int main(void) {
     
     i2c_init();
-
+    while(1) {
     i2c_send(I2CBUF_MOTOR_LEFT_FWD,    sizeof(I2CBUF_MOTOR_LEFT_FWD));
     i2c_send(I2CBUF_MOTOR_RIGHT_FWD,   sizeof(I2CBUF_MOTOR_RIGHT_FWD));
     delayc(9000000);
     i2c_send(I2CBUF_MOTOR_RIGHT_BACK,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
     i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
     delayc(9000000);
+    i2c_send(I2CBUF_MOTOR_RIGHT_FWD,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
+    i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
+    delayc(9000000);
+    i2c_send(I2CBUF_MOTOR_RIGHT_BACK,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
+    i2c_send(I2CBUF_MOTOR_LEFT_FWD,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
+    delayc(9000000);
     i2c_send(I2CBUF_MOTORS_STOP,       sizeof(I2CBUF_MOTORS_STOP));
     delayc(9000000);
     i2c_send(I2CBUF_LED_LEFT_WHITE,    sizeof(I2CBUF_LED_LEFT_WHITE));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_LEFT_RED,      sizeof(I2CBUF_LED_LEFT_RED));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_LEFT_GREEN,    sizeof(I2CBUF_LED_LEFT_GREEN));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_LEFT_BLUE,     sizeof(I2CBUF_LED_LEFT_BLUE));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_LEFT_OFF,      sizeof(I2CBUF_LED_LEFT_OFF));
-    delayc(9000000);
+    delayc(900000);
     // led right
     i2c_send(I2CBUF_LED_RIGHT_WHITE,   sizeof(I2CBUF_LED_RIGHT_WHITE));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_RIGHT_RED,     sizeof(I2CBUF_LED_RIGHT_RED));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_RIGHT_GREEN,   sizeof(I2CBUF_LED_RIGHT_GREEN));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_RIGHT_BLUE,    sizeof(I2CBUF_LED_RIGHT_BLUE));
-    delayc(9000000);
+    delayc(900000);
     i2c_send(I2CBUF_LED_RIGHT_OFF,     sizeof(I2CBUF_LED_RIGHT_OFF));
-    delayc(9000000);
-
-    while(1);
+    delayc(900000);
+    }
+    //while(1);
 }
