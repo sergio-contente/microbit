@@ -1,4 +1,38 @@
+
+#include <stdio.h>
+#include <nrf.h>
 #include "nrf52833.h"
+
+
+#define STOPMOTORS 0
+#define FORWARD 1
+#define BACKWARD 2
+#define TURNLEFT 3
+#define TURNRIGHT 4
+
+#define LEFTLEDRED 5
+#define RIGHTLEDRED 6
+
+#define LEFTLEDGREEN 7
+#define RIGHTLEDGREEN 8
+
+#define LEFTLEDBLUE 9
+#define RIGHTLEDBLUE 10
+
+#define LEFTLEDWHITE 11
+#define RIGHTLEDWHITE 12
+
+#define RIGHTLEDOFF 13
+#define LEFTLEDOFF 14
+
+#define NONE 15
+
+static uint8_t pdu[8+1] = { 0 };
+// static uint8_t pdu[] = {
+//     0x00, // header
+//        1, // length
+//     0xE
+// };
 
 /*
 sources:
@@ -128,45 +162,183 @@ void i2c_send(uint8_t* buf, uint8_t buflen) {
     NRF_TWI0->TASKS_STOP     = 1;
 }
 
-int main(void) {
-    
-    i2c_init();
-    while(1) {
+void TurnLeft(){
+    i2c_send(I2CBUF_MOTOR_RIGHT_BACK,   sizeof(I2CBUF_MOTOR_RIGHT_BACK));
     i2c_send(I2CBUF_MOTOR_LEFT_FWD,    sizeof(I2CBUF_MOTOR_LEFT_FWD));
-    i2c_send(I2CBUF_MOTOR_RIGHT_FWD,   sizeof(I2CBUF_MOTOR_RIGHT_FWD));
-    delayc(9000000);
-    i2c_send(I2CBUF_MOTOR_RIGHT_BACK,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
-    i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
-    delayc(9000000);
+}
+
+void TurnRight(){
     i2c_send(I2CBUF_MOTOR_RIGHT_FWD,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
     i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
-    delayc(9000000);
+}
+
+void goStraight(){
+    i2c_send(I2CBUF_MOTOR_RIGHT_FWD,   sizeof(I2CBUF_MOTOR_RIGHT_FWD));
+    i2c_send(I2CBUF_MOTOR_LEFT_FWD,    sizeof(I2CBUF_MOTOR_LEFT_FWD));
+}
+
+void goBack(){
     i2c_send(I2CBUF_MOTOR_RIGHT_BACK,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
-    i2c_send(I2CBUF_MOTOR_LEFT_FWD,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
-    delayc(9000000);
-    i2c_send(I2CBUF_MOTORS_STOP,       sizeof(I2CBUF_MOTORS_STOP));
-    delayc(9000000);
-    i2c_send(I2CBUF_LED_LEFT_WHITE,    sizeof(I2CBUF_LED_LEFT_WHITE));
-    delayc(900000);
+    i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
+}
+
+void stopMotors(){
+        i2c_send(I2CBUF_MOTORS_STOP,  sizeof(I2CBUF_MOTORS_STOP));
+}
+
+void leftRedOn(){
     i2c_send(I2CBUF_LED_LEFT_RED,      sizeof(I2CBUF_LED_LEFT_RED));
-    delayc(900000);
-    i2c_send(I2CBUF_LED_LEFT_GREEN,    sizeof(I2CBUF_LED_LEFT_GREEN));
-    delayc(900000);
-    i2c_send(I2CBUF_LED_LEFT_BLUE,     sizeof(I2CBUF_LED_LEFT_BLUE));
-    delayc(900000);
+}
+void leftGreenOn(){
+    i2c_send(I2CBUF_LED_LEFT_GREEN,      sizeof(I2CBUF_LED_LEFT_GREEN));
+}
+void leftBlueOn(){
+    i2c_send(I2CBUF_LED_LEFT_BLUE,      sizeof(I2CBUF_LED_LEFT_BLUE));
+}
+void leftWhiteOn(){
+    i2c_send(I2CBUF_LED_LEFT_WHITE,    sizeof(I2CBUF_LED_LEFT_WHITE));
+}
+void leftOff(){
     i2c_send(I2CBUF_LED_LEFT_OFF,      sizeof(I2CBUF_LED_LEFT_OFF));
-    delayc(900000);
-    // led right
-    i2c_send(I2CBUF_LED_RIGHT_WHITE,   sizeof(I2CBUF_LED_RIGHT_WHITE));
-    delayc(900000);
-    i2c_send(I2CBUF_LED_RIGHT_RED,     sizeof(I2CBUF_LED_RIGHT_RED));
-    delayc(900000);
-    i2c_send(I2CBUF_LED_RIGHT_GREEN,   sizeof(I2CBUF_LED_RIGHT_GREEN));
-    delayc(900000);
-    i2c_send(I2CBUF_LED_RIGHT_BLUE,    sizeof(I2CBUF_LED_RIGHT_BLUE));
-    delayc(900000);
-    i2c_send(I2CBUF_LED_RIGHT_OFF,     sizeof(I2CBUF_LED_RIGHT_OFF));
-    delayc(900000);
+}
+
+void rightRedOn(){
+    i2c_send(I2CBUF_LED_RIGHT_RED,      sizeof(I2CBUF_LED_RIGHT_RED));
+}
+void rightGreenOn(){
+    i2c_send(I2CBUF_LED_RIGHT_GREEN,      sizeof(I2CBUF_LED_RIGHT_GREEN));
+}
+void rightBlueOn(){
+    i2c_send(I2CBUF_LED_RIGHT_BLUE,      sizeof(I2CBUF_LED_RIGHT_BLUE));
+}
+void rightWhiteOn(){
+    i2c_send(I2CBUF_LED_RIGHT_WHITE,    sizeof(I2CBUF_LED_RIGHT_WHITE));
+}
+void rightOff(){
+    i2c_send(I2CBUF_LED_RIGHT_OFF,      sizeof(I2CBUF_LED_RIGHT_OFF));
+}
+
+
+void init_rx(void){
+
+    
+    // confiureg HF clock
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0) {}
+
+    // configure radio
+    NRF_RADIO->MODE          = (  RADIO_MODE_MODE_Ble_LR125Kbit << RADIO_MODE_MODE_Pos);
+    NRF_RADIO->TXPOWER       = (  RADIO_TXPOWER_TXPOWER_Pos8dBm << RADIO_TXPOWER_TXPOWER_Pos);
+    NRF_RADIO->PCNF0         = (                              8 << RADIO_PCNF0_LFLEN_Pos)          |
+                               (                              1 << RADIO_PCNF0_S0LEN_Pos)          |
+                               (                              0 << RADIO_PCNF0_S1LEN_Pos)          |
+                               (                              2 << RADIO_PCNF0_CILEN_Pos)          |
+                               (     RADIO_PCNF0_PLEN_LongRange << RADIO_PCNF0_PLEN_Pos)           |
+                               (                              3 << RADIO_PCNF0_TERMLEN_Pos);
+    NRF_RADIO->PCNF1         = (                    sizeof(pdu) << RADIO_PCNF1_MAXLEN_Pos)         |
+                               (                              0 << RADIO_PCNF1_STATLEN_Pos)        |
+                               (                              3 << RADIO_PCNF1_BALEN_Pos)          |
+                               (      RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos)         |
+                               (   RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos);
+    NRF_RADIO->BASE0         = 0xAAAAAAAAUL;
+    NRF_RADIO->TXADDRESS     = 0UL;
+    NRF_RADIO->RXADDRESSES   = (RADIO_RXADDRESSES_ADDR0_Enabled << RADIO_RXADDRESSES_ADDR0_Pos);
+    NRF_RADIO->TIFS          = 0;
+    NRF_RADIO->CRCCNF        = (         RADIO_CRCCNF_LEN_Three << RADIO_CRCCNF_LEN_Pos)           |
+                               (     RADIO_CRCCNF_SKIPADDR_Skip << RADIO_CRCCNF_SKIPADDR_Pos);
+    NRF_RADIO->CRCINIT       = 0xFFFFUL;
+    NRF_RADIO->CRCPOLY       = 0x00065b; // CRC poly: x^16 + x^12^x^5 + 1
+    NRF_RADIO->FREQUENCY     = 10;
+    NRF_RADIO->PACKETPTR     = (uint32_t)pdu;
+
+    // receive
+    NRF_RADIO->SHORTS = (RADIO_SHORTS_READY_START_Enabled << RADIO_SHORTS_READY_START_Pos) |
+                        (RADIO_SHORTS_END_DISABLE_Enabled << RADIO_SHORTS_END_DISABLE_Pos) |
+                        (RADIO_SHORTS_DISABLED_RXEN_Enabled << RADIO_SHORTS_DISABLED_RXEN_Pos);
+    NRF_RADIO->TASKS_RXEN    = 1;
+
+    NRF_RADIO->INTENCLR = 0xffffffff;
+    NVIC_EnableIRQ(RADIO_IRQn);
+    NRF_RADIO->INTENSET = (RADIO_INTENSET_DISABLED_Enabled << RADIO_INTENSET_DISABLED_Pos);
+
+}
+
+void RADIO_IRQHandler(void) {
+    if (NRF_RADIO->EVENTS_DISABLED) {
+        NRF_RADIO->EVENTS_DISABLED = 0;
+
+        if (NRF_RADIO->CRCSTATUS != RADIO_CRCSTATUS_CRCSTATUS_CRCOk) {
+            puts("Invalid CRC");
+        } else {
+            printf("Received packet (%dB): %s\n", pdu[1], &pdu[2]);
+        }
     }
-    //while(1);
+}
+
+int main(void) {
+
+    int command = NONE;
+    i2c_init();
+    init_rx();
+    while(1) {
+        __WFE();
+        command = (int) &pdu[2];
+        // if signal available: receive signal and change variable command
+
+        switch (command){
+            // motors
+            case FORWARD:
+                goStraight();
+                break;
+            case BACKWARD:
+                goBack();
+                break;
+            case TURNLEFT:
+                TurnLeft();
+                break;
+            case TURNRIGHT:
+                TurnRight();
+                break;
+            case STOPMOTORS:
+                stopMotors();
+                break;
+
+            // left red
+            case LEFTLEDRED:
+                leftRedOn();
+                break;
+            case LEFTLEDBLUE:
+                leftBlueOn();
+                break;
+            case LEFTLEDGREEN:
+                leftGreenOn();
+                break;
+            case LEFTLEDWHITE:
+                leftWhiteOn();
+                break;
+            case LEFTLEDOFF:
+                leftOff();
+                break;
+
+            // right led
+            case RIGHTLEDRED:
+                rightRedOn();
+                break;
+            case RIGHTLEDBLUE:
+                rightBlueOn();
+                break;
+            case RIGHTLEDGREEN:
+                rightGreenOn();
+                break;
+            case RIGHTLEDWHITE:
+                rightWhiteOn();
+                break;
+            case RIGHTLEDOFF:
+                rightOff();
+                break;
+            //None
+            default:
+                break;
+        }
+    }   
 }

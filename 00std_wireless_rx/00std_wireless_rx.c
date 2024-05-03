@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #include <nrf.h>
 #include "nrf52833.h"
 
