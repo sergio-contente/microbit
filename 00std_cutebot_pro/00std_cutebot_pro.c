@@ -27,12 +27,12 @@
 
 #define NONE 15
 
-static uint8_t pdu[8+1] = { 0 };
-// static uint8_t pdu[] = {
-//     0x00, // header
-//        1, // length
-//     0xE
-// };
+//static uint8_t pdu[8+1] = { 0 };
+ static uint8_t pdu[] = {
+     0x00, // header
+        1, // length
+     0x0
+};
 
 /*
 sources:
@@ -56,11 +56,56 @@ motor control
 void delayc(uint32_t time);
 
 #define MOTOR_SPEED 50 // [0...100]
-uint8_t I2CBUF_MOTOR_LEFT_FWD[]   = {0x99,0x01,0x01,0x01,MOTOR_SPEED,0x00,0x88};
-uint8_t I2CBUF_MOTOR_LEFT_BACK[]  = {0x99,0x01,0x01,0x00,MOTOR_SPEED,0x00,0x88};
 
-uint8_t I2CBUF_MOTOR_RIGHT_FWD[]  = {0x99,0x01,0x02,0x01,MOTOR_SPEED,0x00,0x88};
-uint8_t I2CBUF_MOTOR_RIGHT_BACK[] = {0x99,0x01,0x02,0x00,MOTOR_SPEED,0x00,0x88};
+uint8_t I2CBUF_MOTOR_LEFT[7];
+uint8_t I2CBUF_MOTOR_RIGHT[7];
+
+void setWheelVelocity(int x) {
+    int left_speed, right_speed, right_direction = 0x01, left_direction = 0x01;
+    if (x >= 50)
+    {
+        left_speed = x;
+        right_speed = 20;
+    }
+    else {
+        left_speed = 50;
+        right_speed = 50 + (50 - x);
+    }
+    
+    // if (y >= 0)
+    // {
+    //     right_speed = y - x;
+    //     left_speed = y + x;
+    // } else {
+    //     right_speed = y + x;
+    //     left_speed = y - x;
+    // }
+
+    // if (left_speed < 0)
+    // {
+    //     left_direction = 0x00;
+    //     left_speed = - left_speed;
+    // }
+    
+    // if (right_speed < 0)
+    // {
+    //     right_direction = 0x00;
+    //     right_speed = - right_speed;
+    // }
+    
+    
+    uint8_t left_data[] = {0x99, 0x01, 0x01, left_direction, left_speed, 0x00, 0x88};
+    uint8_t right_data[] = {0x99, 0x01, 0x02, right_direction, right_speed, 0x00, 0x88};
+    for (int i = 0; i < 7; i++) {
+        I2CBUF_MOTOR_LEFT[i] = left_data[i];
+        I2CBUF_MOTOR_RIGHT[i] = right_data[i];
+    }
+}
+// uint8_t I2CBUF_MOTOR_LEFT_FWD[]   = {0x99,0x01,0x01,0x01,MOTOR_SPEED,0x00,0x88};
+// uint8_t I2CBUF_MOTOR_LEFT_BACK[]  = {0x99,0x01,0x01,0x00,MOTOR_SPEED,0x00,0x88};
+
+// uint8_t I2CBUF_MOTOR_RIGHT_FWD[]  = {0x99,0x01,0x02,0x01,MOTOR_SPEED,0x00,0x88};
+// uint8_t I2CBUF_MOTOR_RIGHT_BACK[] = {0x99,0x01,0x02,0x00,MOTOR_SPEED,0x00,0x88};
 
 uint8_t I2CBUF_MOTORS_STOP[]      = {0x99,0x09,0x03,0x00,0x00,0x00,0x88};
 
@@ -162,25 +207,25 @@ void i2c_send(uint8_t* buf, uint8_t buflen) {
     NRF_TWI0->TASKS_STOP     = 1;
 }
 
-void TurnLeft(){
-    i2c_send(I2CBUF_MOTOR_RIGHT_BACK,   sizeof(I2CBUF_MOTOR_RIGHT_BACK));
-    i2c_send(I2CBUF_MOTOR_LEFT_FWD,    sizeof(I2CBUF_MOTOR_LEFT_FWD));
-}
+// void TurnLeft(){
+//     i2c_send(I2CBUF_MOTOR_RIGHT_BACK,   sizeof(I2CBUF_MOTOR_RIGHT_BACK));
+//     i2c_send(I2CBUF_MOTOR_LEFT_FWD,    sizeof(I2CBUF_MOTOR_LEFT_FWD));
+// }
 
-void TurnRight(){
-    i2c_send(I2CBUF_MOTOR_RIGHT_FWD,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
-    i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
-}
+// void TurnRight(){
+//     i2c_send(I2CBUF_MOTOR_RIGHT_FWD,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
+//     i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
+// }
 
-void goStraight(){
-    i2c_send(I2CBUF_MOTOR_RIGHT_FWD,   sizeof(I2CBUF_MOTOR_RIGHT_FWD));
-    i2c_send(I2CBUF_MOTOR_LEFT_FWD,    sizeof(I2CBUF_MOTOR_LEFT_FWD));
-}
+// void goStraight(){
+//     i2c_send(I2CBUF_MOTOR_RIGHT_FWD,   sizeof(I2CBUF_MOTOR_RIGHT_FWD));
+//     i2c_send(I2CBUF_MOTOR_LEFT_FWD,    sizeof(I2CBUF_MOTOR_LEFT_FWD));
+// }
 
-void goBack(){
-    i2c_send(I2CBUF_MOTOR_RIGHT_BACK,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
-    i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
-}
+// void goBack(){
+//     i2c_send(I2CBUF_MOTOR_RIGHT_BACK,  sizeof(I2CBUF_MOTOR_RIGHT_BACK));
+//     i2c_send(I2CBUF_MOTOR_LEFT_BACK,   sizeof(I2CBUF_MOTOR_LEFT_BACK));
+// }
 
 void stopMotors(){
         i2c_send(I2CBUF_MOTORS_STOP,  sizeof(I2CBUF_MOTORS_STOP));
@@ -216,6 +261,11 @@ void rightWhiteOn(){
 }
 void rightOff(){
     i2c_send(I2CBUF_LED_RIGHT_OFF,      sizeof(I2CBUF_LED_RIGHT_OFF));
+}
+
+void sendWheelVelocity(){
+    i2c_send(I2CBUF_MOTOR_RIGHT,   sizeof(I2CBUF_MOTOR_RIGHT));
+    i2c_send(I2CBUF_MOTOR_LEFT,    sizeof(I2CBUF_MOTOR_LEFT));
 }
 
 
@@ -263,6 +313,8 @@ void init_rx(void){
 
 }
 
+int command_x, command_y;
+
 void RADIO_IRQHandler(void) {
     if (NRF_RADIO->EVENTS_DISABLED) {
         NRF_RADIO->EVENTS_DISABLED = 0;
@@ -270,7 +322,11 @@ void RADIO_IRQHandler(void) {
         if (NRF_RADIO->CRCSTATUS != RADIO_CRCSTATUS_CRCSTATUS_CRCOk) {
             puts("Invalid CRC");
         } else {
-            printf("Received packet (%dB): %s\n", pdu[1], &pdu[2]);
+            printf("Received packet (%dB): %d\n", pdu[1], pdu[2]);
+            command_x = (int) pdu[2];
+            //command_y = (int) pdu[3] - 50;
+            setWheelVelocity(command_x);
+            sendWheelVelocity();
         }
     }
 }
@@ -282,63 +338,64 @@ int main(void) {
     init_rx();
     while(1) {
         __WFE();
-        command = (int) &pdu[2];
+        //Set the wheel speed
+
+
         // if signal available: receive signal and change variable command
+        // switch (command){
+        //     // motors
+        //     case FORWARD:
+        //         goStraight();
+        //         break;
+        //     case BACKWARD:
+        //         goBack();
+        //         break;
+        //     case TURNLEFT:
+        //         TurnLeft();
+        //         break;
+        //     case TURNRIGHT:
+        //         TurnRight();
+        //         break;
+        //     case STOPMOTORS:
+        //         stopMotors();
+        //         break;
 
-        switch (command){
-            // motors
-            case FORWARD:
-                goStraight();
-                break;
-            case BACKWARD:
-                goBack();
-                break;
-            case TURNLEFT:
-                TurnLeft();
-                break;
-            case TURNRIGHT:
-                TurnRight();
-                break;
-            case STOPMOTORS:
-                stopMotors();
-                break;
+        //     // left red
+        //     case LEFTLEDRED:
+        //         leftRedOn();
+        //         break;
+        //     case LEFTLEDBLUE:
+        //         leftBlueOn();
+        //         break;
+        //     case LEFTLEDGREEN:
+        //         leftGreenOn();
+        //         break;
+        //     case LEFTLEDWHITE:
+        //         leftWhiteOn();
+        //         break;
+        //     case LEFTLEDOFF:
+        //         leftOff();
+        //         break;
 
-            // left red
-            case LEFTLEDRED:
-                leftRedOn();
-                break;
-            case LEFTLEDBLUE:
-                leftBlueOn();
-                break;
-            case LEFTLEDGREEN:
-                leftGreenOn();
-                break;
-            case LEFTLEDWHITE:
-                leftWhiteOn();
-                break;
-            case LEFTLEDOFF:
-                leftOff();
-                break;
-
-            // right led
-            case RIGHTLEDRED:
-                rightRedOn();
-                break;
-            case RIGHTLEDBLUE:
-                rightBlueOn();
-                break;
-            case RIGHTLEDGREEN:
-                rightGreenOn();
-                break;
-            case RIGHTLEDWHITE:
-                rightWhiteOn();
-                break;
-            case RIGHTLEDOFF:
-                rightOff();
-                break;
-            //None
-            default:
-                break;
-        }
+        //     // right led
+        //     case RIGHTLEDRED:
+        //         rightRedOn();
+        //         break;
+        //     case RIGHTLEDBLUE:
+        //         rightBlueOn();
+        //         break;
+        //     case RIGHTLEDGREEN:
+        //         rightGreenOn();
+        //         break;
+        //     case RIGHTLEDWHITE:
+        //         rightWhiteOn();
+        //         break;
+        //     case RIGHTLEDOFF:
+        //         rightOff();
+        //         break;
+        //     //None
+        //     default:
+        //         break;
+        // }
     }   
 }
