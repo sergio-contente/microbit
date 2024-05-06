@@ -30,8 +30,8 @@
 //static uint8_t pdu[8+1] = { 0 };
  static uint8_t pdu[] = {
      0x00, // header
-        1, // length
-     0x0
+        2, // length
+     0x0, 0x0
 };
 
 /*
@@ -60,17 +60,12 @@ void delayc(uint32_t time);
 uint8_t I2CBUF_MOTOR_LEFT[7];
 uint8_t I2CBUF_MOTOR_RIGHT[7];
 
-void setWheelVelocity(int x) {
-    int left_speed, right_speed, right_direction = 0x01, left_direction = 0x01;
-    if (x >= 50)
-    {
-        left_speed = x;
-        right_speed = 20;
-    }
-    else {
-        left_speed = 50;
-        right_speed = 50 + (50 - x);
-    }
+int base_speed = 0;
+int right_direction = 0x01, left_direction = 0x01;
+int left_speed, right_speed;
+
+void setWheelVelocity() {
+
     
     // if (y >= 0)
     // {
@@ -93,13 +88,14 @@ void setWheelVelocity(int x) {
     //     right_speed = - right_speed;
     // }
     
-    
     uint8_t left_data[] = {0x99, 0x01, 0x01, left_direction, left_speed, 0x00, 0x88};
     uint8_t right_data[] = {0x99, 0x01, 0x02, right_direction, right_speed, 0x00, 0x88};
     for (int i = 0; i < 7; i++) {
         I2CBUF_MOTOR_LEFT[i] = left_data[i];
         I2CBUF_MOTOR_RIGHT[i] = right_data[i];
     }
+
+
 }
 // uint8_t I2CBUF_MOTOR_LEFT_FWD[]   = {0x99,0x01,0x01,0x01,MOTOR_SPEED,0x00,0x88};
 // uint8_t I2CBUF_MOTOR_LEFT_BACK[]  = {0x99,0x01,0x01,0x00,MOTOR_SPEED,0x00,0x88};
@@ -322,11 +318,7 @@ void RADIO_IRQHandler(void) {
         if (NRF_RADIO->CRCSTATUS != RADIO_CRCSTATUS_CRCSTATUS_CRCOk) {
             puts("Invalid CRC");
         } else {
-            printf("Received packet (%dB): %d\n", pdu[1], pdu[2]);
-            command_x = (int) pdu[2];
-            //command_y = (int) pdu[3] - 50;
-            setWheelVelocity(command_x);
-            sendWheelVelocity();
+            printf("Received packet (%dB): %d and %d\n", pdu[1], pdu[2], pdu[3]);
         }
     }
 }
@@ -340,7 +332,83 @@ int main(void) {
         __WFE();
         //Set the wheel speed
 
+          int a = (int) pdu[2];
+          int b = (int) pdu[3];
 
+          if(a == 3){
+            base_speed = b;
+            setWheelVelocity();
+            sendWheelVelocity();
+          }
+
+          if(a == 1){
+          switch(b){
+    
+            case FORWARD:
+              right_direction = 0x01;
+              left_direction = 0x01;
+              break;
+            case BACKWARD:
+              right_direction = 0x00;
+              left_direction = 0x00;
+              break;
+
+        // left red
+            case LEFTLEDRED:
+              leftRedOn();
+              break;
+            case LEFTLEDBLUE:
+              leftBlueOn();
+              break;
+            case LEFTLEDGREEN:
+              leftGreenOn();
+              break;
+            case LEFTLEDWHITE:
+              leftWhiteOn();
+              break;
+            case LEFTLEDOFF:
+              leftOff();
+              break;
+
+             // right led
+            case RIGHTLEDRED:
+              rightRedOn();
+              break;
+            case RIGHTLEDBLUE:
+              rightBlueOn();
+              break;
+            case RIGHTLEDGREEN:
+              rightGreenOn();
+              break;
+            case RIGHTLEDWHITE:
+              rightWhiteOn();
+              break;
+            case RIGHTLEDOFF:
+              rightOff();
+              break;
+              
+             //None
+            default:
+              break;
+
+          }
+            setWheelVelocity();
+            sendWheelVelocity();
+            }
+
+          if(a == 2){
+            int steering = b - 50;
+    
+            left_speed = 50+steering;
+            right_speed = 50-steering;
+
+            left_speed = (left_speed*base_speed)/100;
+            right_speed = (right_speed*base_speed)/100;
+
+            setWheelVelocity();
+            sendWheelVelocity();
+          }
+          
         // if signal available: receive signal and change variable command
         // switch (command){
         //     // motors
