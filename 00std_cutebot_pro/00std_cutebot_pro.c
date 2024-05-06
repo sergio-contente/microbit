@@ -63,8 +63,15 @@ uint8_t I2CBUF_MOTOR_RIGHT[7];
 int base_speed = 0;
 int right_direction = 0x01, left_direction = 0x01;
 int left_speed, right_speed;
+int steering = 0;
 
 void setWheelVelocity() {
+
+    left_speed = 50+steering;
+    right_speed = 50-steering;
+
+    left_speed = (left_speed*base_speed)/100;
+    right_speed = (right_speed*base_speed)/100;
 
     
     // if (y >= 0)
@@ -335,79 +342,76 @@ int main(void) {
           int a = (int) pdu[2];
           int b = (int) pdu[3];
 
-          if(a == 3){
-            base_speed = b;
-            setWheelVelocity();
-            sendWheelVelocity();
-          }
-
           if(a == 1){
-          switch(b){
+            switch(b){
     
-            case FORWARD:
-              right_direction = 0x01;
-              left_direction = 0x01;
-              break;
-            case BACKWARD:
-              right_direction = 0x00;
-              left_direction = 0x00;
-              break;
+              case FORWARD:
+                right_direction = 0x01;
+                left_direction = 0x01;
+                break;
+              case BACKWARD:
+                right_direction = 0x00;
+                left_direction = 0x00;
+                break;
 
-        // left red
-            case LEFTLEDRED:
-              leftRedOn();
-              break;
-            case LEFTLEDBLUE:
-              leftBlueOn();
-              break;
-            case LEFTLEDGREEN:
-              leftGreenOn();
-              break;
-            case LEFTLEDWHITE:
-              leftWhiteOn();
-              break;
-            case LEFTLEDOFF:
-              leftOff();
-              break;
+          // left red
+              case LEFTLEDRED:
+                leftRedOn();
+                break;
+              case LEFTLEDBLUE:
+                leftBlueOn();
+                break;
+              case LEFTLEDGREEN:
+                leftGreenOn();
+                break;
+              case LEFTLEDWHITE:
+                leftWhiteOn();
+                break;
+              case LEFTLEDOFF:
+                leftOff();
+                break;
 
-             // right led
-            case RIGHTLEDRED:
-              rightRedOn();
-              break;
-            case RIGHTLEDBLUE:
-              rightBlueOn();
-              break;
-            case RIGHTLEDGREEN:
-              rightGreenOn();
-              break;
-            case RIGHTLEDWHITE:
-              rightWhiteOn();
-              break;
-            case RIGHTLEDOFF:
-              rightOff();
-              break;
+               // right led
+              case RIGHTLEDRED:
+                rightRedOn();
+                break;
+              case RIGHTLEDBLUE:
+                rightBlueOn();
+                break;
+              case RIGHTLEDGREEN:
+                rightGreenOn();
+                break;
+              case RIGHTLEDWHITE:
+                rightWhiteOn();
+                break;
+              case RIGHTLEDOFF:
+                rightOff();
+                break;
               
-             //None
-            default:
-              break;
+               //None
+              default:
+                break;
 
           }
             setWheelVelocity();
             sendWheelVelocity();
             }
 
-          if(a == 2){
-            int steering = b - 50;
-    
-            left_speed = 50+steering;
-            right_speed = 50-steering;
 
-            left_speed = (left_speed*base_speed)/100;
-            right_speed = (right_speed*base_speed)/100;
+          if(a == 2){
+            steering = b - 50;
+  
+            setWheelVelocity();
+            sendWheelVelocity();
+          }
+
+          if(a == 3){
+            base_speed = b;
 
             setWheelVelocity();
             sendWheelVelocity();
           }
+
           
         // if signal available: receive signal and change variable command
         // switch (command){
